@@ -1,0 +1,83 @@
+services:
+  tracelogkit-postgres-primary:
+    image: bitnami/postgresql:latest
+    container_name: tracelogkit-postgres-primary
+    hostname: tracelogkit-postgres-primary
+    restart: unless-stopped
+    ports:
+      # 端口映射：主机端口:容器端口
+      # 如果 DB_WRITE_PORT 是外部连接端口，这里应该映射到容器内 5432
+      # 开发环境：通常映射为 5432:5432
+      # 生产环境：如果 PostgreSQL 在外部服务器，不需要端口映射
+      - "5432:5432"
+    volumes:
+      - tracelogkit-postgres-primary-data:/var/lib/postgresql/data
+      - ../../scripts/init_database.sql:/docker-entrypoint-initdb.d/init_database.sql:ro
+    # 从项目根目录的 .env 文件读取环境变量
+    env_file:
+      - ../../.env
+    environment:
+      - POSTGRESQL_USERNAME=${DB_WRITE_USER:-admin}
+      - POSTGRESQL_PASSWORD=${DB_WRITE_PASSWORD:-admin}
+      - POSTGRESQL_DATABASE=${DB_WRITE_DB:-admin}
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=${DB_REPLICATION_USER:-repl_user}
+      - POSTGRESQL_REPLICATION_PASSWORD=${DB_REPLICATION_PASSWORD:-repl_password}
+      - TZ=${TZ:-Asia/Shanghai}
+      - PGTZ=${PGTZ:-Asia/Shanghai}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_WRITE_USER:-admin} -d ${DB_WRITE_DB:-admin} -h localhost -p 5432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - tracelogkit-network
+
+  tracelogkit-postgres-replica:
+    image: bitnami/postgresql:latest
+    container_name: tracelogkit-postgres-replica
+    hostname: tracelogkit-postgres-replica
+    restart: unless-stopped
+    depends_on:
+      - tracelogkit-postgres-primary
+    ports:
+      # 端口映射：主机端口:容器端口
+      # 开发环境：通常映射为 5433:5432（避免与主库冲突）
+      # 生产环境：如果 PostgreSQL 在外部服务器，不需要端口映射
+      - "5433:5432"
+    volumes:
+      - tracelogkit-postgres-replica-data:/var/lib/postgresql/data
+    # 从项目根目录的 .env 文件读取环境变量
+    env_file:
+      - ../../.env
+    environment:
+      - POSTGRESQL_USERNAME=${DB_READ_USER:-admin}
+      - POSTGRESQL_PASSWORD=${DB_READ_PASSWORD:-admin}
+      - POSTGRESQL_DATABASE=${DB_READ_DB:-admin}
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_MASTER_HOST=tracelogkit-postgres-primary
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - POSTGRESQL_REPLICATION_USER=${DB_REPLICATION_USER:-repl_user}
+      - POSTGRESQL_REPLICATION_PASSWORD=${DB_REPLICATION_PASSWORD:-repl_password}
+      - TZ=${TZ:-Asia/Shanghai}
+      - PGTZ=${PGTZ:-Asia/Shanghai}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_READ_USER:-admin} -d ${DB_READ_DB:-admin} -h localhost -p 5432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - tracelogkit-network
+
+volumes:
+  tracelogkit-postgres-primary-data:
+    name: tracelogkit_postgres_primary_data
+  tracelogkit-postgres-replica-data:
+    name: tracelogkit_postgres_replica_data
+
+networks:
+  tracelogkit-network:
+    name: tracelogkit-network
+    driver: bridge

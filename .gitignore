@@ -1,0 +1,251 @@
+# TraceLogKit .gitignore
+
+# ============================================
+# 敏感信息和环境配置
+# ============================================
+.env
+.env.*
+!.env.example
+*.secret
+secrets/
+credentials/
+
+# ============================================
+# Docker 运行时数据
+# ============================================
+# Loki 数据
+docker/loki/data/
+docker/loki/chunks/
+docker/loki/rules/
+docker/loki/compactor/
+
+# Tempo 数据
+docker/tempo/data/
+docker/tempo/blocks/
+docker/tempo/wal/
+
+# Prometheus 数据
+docker/prometheus/data/
+
+# Grafana 数据
+docker/grafana/data/
+docker/grafana/plugins/
+
+# PostgreSQL 数据
+docker/postgres/data/
+docker/postgres/pgdata/
+
+# OTel Collector 数据
+docker/otel-collector/data/
+
+# Promtail positions（运行时生成）
+docker/promtail/promtail-positions/*.yaml
+!docker/promtail/promtail-positions/.gitkeep
+
+# ============================================
+# 生成的配置文件（从模板生成）
+# ============================================
+docker/loki/loki.yaml
+docker/prometheus/prometheus.yml
+docker/promtail/promtail.yaml
+docker/prometheus/targets/external-services.yml
+
+# ============================================
+# 日志文件
+# ============================================
+*.log
+logs/
+*.log.*
+docker/**/*.log
+
+# ============================================
+# Python
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.hypothesis/
+.pytype/
+.venv
+venv/
+ENV/
+env/
+
+# ============================================
+# IDE 和编辑器
+# ============================================
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Cursor
+.cursor/
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+.idea_modules/
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+*.swp
+*.swo
+*~
+.*.sw?
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+auto-save-list
+tramp
+.\#*
+
+# ============================================
+# 操作系统
+# ============================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+.directory
+.Trash-*
+
+# ============================================
+# 临时文件和备份
+# ============================================
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*.orig
+*~
+.backup/
+backup/
+
+# ============================================
+# Node.js (如果有前端相关)
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.eslintcache
+.node_repl_history
+*.tgz
+.yarn-integrity
+
+# ============================================
+# 测试和覆盖率
+# ============================================
+.coverage
+coverage/
+*.cover
+.cache
+nosetests.xml
+coverage.xml
+*.coveragerc
+
+# ============================================
+# Docker 相关
+# ============================================
+# Docker Compose override（开发者本地配置）
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ============================================
+# 任务文档（临时工作流文档）
+# ============================================
+docs/task_*/
+docs/*_support/
+
+# ============================================
+# 其他
+# ============================================
+# SSL 证书
+*.pem
+*.crt
+*.key
+*.p12
+*.pfx
+certs/
+
+# 压缩文件
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 大文件和二进制
+*.bin
+*.exe
+*.dll
+*.so
+*.dylib

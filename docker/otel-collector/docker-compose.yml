@@ -1,0 +1,33 @@
+services:
+  tracelogkit-otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.93.0
+    container_name: tracelogkit-otel-collector
+    hostname: tracelogkit-otel-collector
+    restart: unless-stopped
+    command:
+      - "--config=/etc/otelcol-contrib/config.yaml"
+    ports:
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+      - "8888:8888" # Collector metrics
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    env_file:
+      - ../../.env
+    environment:
+      - TZ=${TZ:-Asia/Shanghai}
+      # Prevent container-level proxy settings from breaking in-cluster OTLP traffic.
+      - HTTP_PROXY=
+      - HTTPS_PROXY=
+      - NO_PROXY=tempo,otel-collector,tracelogkit-otel-collector,localhost,127.0.0.1
+      - no_proxy=tempo,otel-collector,tracelogkit-otel-collector,localhost,127.0.0.1
+    networks:
+      tracelogkit-network:
+        aliases:
+          # Default hostname used by TraceLogKit/.env.example
+          - otel-collector
+
+networks:
+  tracelogkit-network:
+    name: tracelogkit-network
+    driver: bridge

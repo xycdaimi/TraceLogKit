@@ -1,0 +1,52 @@
+services:
+  tracelogkit-grafana:
+    # Use modern Grafana (new app platform). Resources are applied via HTTP API by grafana-bootstrap.
+    image: grafana/grafana:11.5.0
+    container_name: tracelogkit-grafana
+    hostname: tracelogkit-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - ../../.env
+    environment:
+      - TZ=${TZ:-Asia/Shanghai}
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      tracelogkit-network:
+        aliases:
+          - grafana
+
+  tracelogkit-grafana-bootstrap:
+    image: curlimages/curl:8.6.0
+    container_name: tracelogkit-grafana-bootstrap
+    restart: "no"
+    depends_on:
+      - tracelogkit-grafana
+    env_file:
+      - ../../.env
+    environment:
+      - GRAFANA_URL=http://tracelogkit-grafana:3000
+      - GRAFANA_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GRAFANA_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ./resources:/resources:ro
+      - ./bootstrap.sh:/bootstrap.sh:ro
+    entrypoint: ["/bin/sh", "/bootstrap.sh"]
+    networks:
+      - tracelogkit-network
+
+volumes:
+  grafana-data:
+    # New resource-model bootstrap assumes fresh Grafana state to ensure admin credentials match env.
+    # This avoids "invalid password" when users previously ran a different Grafana version/volume.
+    name: tracelogkit_grafana_data_v2
+
+networks:
+  tracelogkit-network:
+    name: tracelogkit-network
+    driver: bridge
+

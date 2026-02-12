@@ -1,0 +1,10 @@
+{
+  "name": "Prometheus",
+  "type": "prometheus",
+  "access": "proxy",
+  "url": "http://tracelogkit-prometheus:9090",
+  "uid": "tracelogkit-prometheus",
+  "isDefault": true,
+  "jsonData": {}
+}
+

@@ -1,0 +1,37 @@
+services:
+  tracelogkit-promtail:
+    image: grafana/promtail:2.9.8
+    container_name: tracelogkit-promtail
+    hostname: tracelogkit-promtail
+    restart: unless-stopped
+    ports:
+      - "9080:9080"
+    volumes:
+      - ./promtail.yaml.tpl:/etc/promtail/promtail.yaml.tpl:ro
+      - ./entrypoint.sh:/entrypoint.sh:ro
+      - ./promtail-positions:/var/lib/promtail
+      # Docker socket for service discovery (works in Docker Desktop as well).
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    environment:
+      - TZ=${TZ:-Asia/Shanghai}
+      - LOKI_URL=${LOKI_URL:-http://tracelogkit-loki:3100}
+      - PROMTAIL_CONTAINER_NAMES=${PROMTAIL_CONTAINER_NAMES:-}
+      - PROMTAIL_CONTAINER_NAME_PATTERN=${PROMTAIL_CONTAINER_NAME_PATTERN:-}
+      - PROMTAIL_COMPOSE_PROJECT=${PROMTAIL_COMPOSE_PROJECT:-}
+      - PROMTAIL_COMPOSE_SERVICE=${PROMTAIL_COMPOSE_SERVICE:-}
+      - HTTP_PROXY=${HTTP_PROXY:-}
+      - HTTPS_PROXY=${HTTPS_PROXY:-}
+      - NO_PROXY=${NO_PROXY:-localhost,127.0.0.1,tempo,loki,grafana,prometheus,otel-collector,tracelogkit-network}
+      - no_proxy=${no_proxy:-localhost,127.0.0.1,tempo,loki,grafana,prometheus,otel-collector,tracelogkit-network}
+    networks:
+      - tracelogkit-network
+
+networks:
+  tracelogkit-network:
+    name: tracelogkit-network
+    driver: bridge
+
+volumes:
+  promtail-positions:
+    name: tracelogkit_promtail_positions

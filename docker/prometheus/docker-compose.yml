@@ -1,0 +1,38 @@
+services:
+  tracelogkit-prometheus:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: tracelogkit-prometheus:latest
+    container_name: tracelogkit-prometheus
+    hostname: tracelogkit-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus-data:/prometheus
+      - ./prometheus.yml.tpl:/etc/prometheus/prometheus.yml.tpl:ro
+      - ./targets:/etc/prometheus/targets
+    # 从 TraceLogKit 根目录的 .env 读取环境变量
+    env_file:
+      - ../../.env
+    environment:
+      - TZ=${TZ:-Asia/Shanghai}
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+    networks:
+      tracelogkit-network:
+        aliases:
+          - prometheus
+
+volumes:
+  prometheus-data:
+    name: tracelogkit_prometheus_data
+
+networks:
+  tracelogkit-network:
+    name: tracelogkit-network
+    driver: bridge

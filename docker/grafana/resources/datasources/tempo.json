@@ -1,0 +1,20 @@
+{
+  "name": "Tempo",
+  "type": "tempo",
+  "access": "proxy",
+  "url": "http://tracelogkit-tempo:3200",
+  "uid": "tracelogkit-tempo",
+  "jsonData": {
+    "tracesToLogsV2": {
+      "datasourceUid": "tracelogkit-loki",
+      "spanStartTimeShift": "-5m",
+      "spanEndTimeShift": "5m",
+      "tags": ["project"],
+      "filterByTraceID": false,
+      "filterBySpanID": false,
+      "customQuery": true,
+      "query": "{$${__tags}} | json | trace_id=\"$${__trace.traceId}\""
+    }
+  }
+}
+

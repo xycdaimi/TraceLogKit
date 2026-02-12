@@ -1,0 +1,149 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "tracelogkit-prometheus" },
+      "description": "任务创建速率（api-gateway 接收）。",
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true } },
+      "targets": [
+        { "expr": "sum(rate(ai_router_tasks_created_total[1m])) by (task_type)", "legendFormat": "{{task_type}}", "refId": "A" }
+      ],
+      "title": "Tasks created/s (by task_type)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "tracelogkit-prometheus" },
+      "description": "任务入队速率（api-gateway publish MQ）。",
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true } },
+      "targets": [
+        { "expr": "sum(rate(ai_router_tasks_published_total[1m])) by (task_type)", "legendFormat": "{{task_type}}", "refId": "A" }
+      ],
+      "title": "Tasks published/s (by task_type)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "tracelogkit-prometheus" },
+      "description": "forwarder 从 MQ 接收任务速率。",
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 3,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true } },
+      "targets": [
+        { "expr": "sum(rate(ai_router_forwarder_accepted_total[1m])) by (task_type)", "legendFormat": "{{task_type}}", "refId": "A" }
+      ],
+      "title": "Forwarder accepted/s (by task_type)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "tracelogkit-prometheus" },
+      "description": "forwarder 忙导致 requeue（说明服务拥塞）。",
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 4,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true } },
+      "targets": [
+        { "expr": "sum(rate(ai_router_forwarder_requeued_total[1m])) by (task_type)", "legendFormat": "{{task_type}}", "refId": "A" }
+      ],
+      "title": "Forwarder requeued/s (by task_type)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "tracelogkit-prometheus" },
+      "description": "任务完成速率（SUCCESS/FAILED）。",
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 16 },
+      "id": 5,
+      "options": { "legend": { "displayMode": "table", "placement": "right", "showLegend": true } },
+      "targets": [
+        { "expr": "sum(rate(ai_router_tasks_completed_total[5m])) by (status)", "legendFormat": "{{status}}", "refId": "A" }
+      ],
+      "title": "Tasks completed/s (by status)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "tracelogkit-prometheus" },
+      "description": "端到端 p95（create -> callback）",
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 25 },
+      "id": 6,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true } },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(ai_router_task_end_to_end_seconds_bucket[5m])) by (le, status))",
+          "legendFormat": "p95 {{status}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Task end-to-end p95 (s)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "tracelogkit-prometheus" },
+      "description": "推理执行 p95（forwarder inference.execute）。",
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 25 },
+      "id": 7,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true } },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(ai_router_inference_seconds_bucket[5m])) by (le, status))",
+          "legendFormat": "p95 {{status}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Inference p95 (s)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "tracelogkit-prometheus" },
+      "description": "失败错误码分布（10m 速率，低基数）。",
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 34 },
+      "id": 8,
+      "options": { "legend": { "displayMode": "table", "placement": "right", "showLegend": true } },
+      "targets": [
+        {
+          "expr": "topk(10, sum(rate(ai_router_tasks_completed_total{status=\"FAILED\"}[10m])) by (error_code))",
+          "legendFormat": "{{error_code}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Top error codes (FAILED)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["tracelogkit", "pipeline"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30m", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Task Pipeline",
+  "uid": "tracelogkit_task_pipeline",
+  "version": 1
+}
+

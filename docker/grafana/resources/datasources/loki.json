@@ -1,0 +1,25 @@
+{
+  "name": "Loki",
+  "type": "loki",
+  "access": "proxy",
+  "url": "http://tracelogkit-loki:3100",
+  "uid": "tracelogkit-loki",
+  "jsonData": {
+    "derivedFields": [
+      {
+        "name": "trace_id",
+        "matcherRegex": "\"trace_id\"\\s*:\\s*\"([0-9a-fA-F]{32})\"",
+        "url": "$${__value.raw}",
+        "datasourceUid": "tracelogkit-tempo"
+      },
+      {
+        "name": "task_id",
+        "matcherRegex": "\"task_id\"\\s*:\\s*\"([^\"]+)\"",
+        "url": "/explore?left={\"datasource\":\"tracelogkit-tempo\",\"queries\":[{\"queryType\":\"traceql\",\"query\":\"{span.task_id=\\\"$${__value.raw}\\\"}\"}]}",
+        "datasourceUid": "tracelogkit-tempo",
+        "urlDisplayLabel": "View traces by task_id"
+      }
+    ]
+  }
+}
+

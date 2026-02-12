@@ -1,0 +1,36 @@
+services:
+  tracelogkit-tempo:
+    image: grafana/tempo:latest
+    container_name: tracelogkit-tempo
+    hostname: tracelogkit-tempo
+    restart: unless-stopped
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    ports:
+      - "3200:3200" # Tempo HTTP API (Grafana datasource)
+    volumes:
+      - ./tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    environment:
+      - TZ=${TZ:-Asia/Shanghai}
+      # Tempo does not need to export traces; prevent inheriting project OTEL_* envs.
+      - OTEL_TRACES_EXPORTER=none
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=none
+      # Prevent container-level proxy settings from breaking in-cluster OTLP traffic.
+      - HTTP_PROXY=
+      - HTTPS_PROXY=
+      - NO_PROXY=tempo,otel-collector,tracelogkit-otel-collector,localhost,127.0.0.1
+      - no_proxy=tempo,otel-collector,tracelogkit-otel-collector,localhost,127.0.0.1
+    networks:
+      tracelogkit-network:
+        aliases:
+          - tempo
+
+networks:
+  tracelogkit-network:
+    name: tracelogkit-network
+    driver: bridge
+
+volumes:
+  tempo-data:
+    name: tracelogkit_tempo_data

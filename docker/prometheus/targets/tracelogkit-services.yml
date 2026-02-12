@@ -1,0 +1,30 @@
+# TraceLogKit 自身服务的监控配置
+# 这些是 TraceLogKit 基础设施服务的监控目标
+
+# Prometheus 自身
+- targets:
+    - "tracelogkit-prometheus:9090"
+  labels:
+    service: "tracelogkit-prometheus"
+    job: "tracelogkit-prometheus"
+
+# OTel Collector
+- targets:
+    - "tracelogkit-otel-collector:8888"
+  labels:
+    service: "tracelogkit-otel-collector"
+    job: "tracelogkit-otel-collector"
+
+# Tempo
+- targets:
+    - "tracelogkit-tempo:3200"
+  labels:
+    service: "tracelogkit-tempo"
+    job: "tracelogkit-tempo"
+
+# Loki
+- targets:
+    - "tracelogkit-loki:3100"
+  labels:
+    service: "tracelogkit-loki"
+    job: "tracelogkit-loki"

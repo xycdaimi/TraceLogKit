@@ -1,0 +1,36 @@
+services:
+  tracelogkit-loki:
+    image: grafana/loki:2.9.8
+    container_name: tracelogkit-loki
+    hostname: tracelogkit-loki
+    restart: unless-stopped
+    # 使用新的 entrypoint 脚本
+    entrypoint: /etc/loki/entrypoint.sh
+    ports:
+      - "3100:3100" # Loki HTTP API (Grafana datasource)
+    volumes:
+      - ./loki.yaml.tpl:/etc/loki/loki.yaml.tpl:ro # 挂载模板文件
+      - ./entrypoint.sh:/etc/loki/entrypoint.sh:ro # 挂载 entrypoint 脚本
+      - loki-data:/loki
+    # 从 TraceLogKit 根目录的 .env 读取环境变量
+    env_file:
+      - ../../.env
+    environment:
+      - TZ=${TZ:-Asia/Shanghai}
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - NO_PROXY=${NO_PROXY}
+      - no_proxy=${no_proxy}
+    networks:
+      tracelogkit-network:
+        aliases:
+          - loki
+
+networks:
+  tracelogkit-network:
+    name: tracelogkit-network
+    driver: bridge
+
+volumes:
+  loki-data:
+    name: tracelogkit_loki_data

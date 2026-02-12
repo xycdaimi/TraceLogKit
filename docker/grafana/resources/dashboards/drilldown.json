@@ -1,0 +1,172 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "description": "**使用方式**：\n\n在上方输入查询条件（层级关系：project → task_id → trace_id/request_id）：\n- **按 task_id 查询**：查看该任务的所有执行（首次、重试等）\n- **按 trace_id 查询**：查看单次执行的详细链路\n- **按 request_id 查询**：按请求 ID 过滤\n\n点击日志中的链接：\n- **trace_id 链接**：跳转到 Tempo 查看单次执行链路\n- **task_id 链接**：跳转到 Tempo 查看任务的所有 Trace（TraceQL 查询）",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "content": "", "mode": "markdown" },
+      "title": "使用说明",
+      "type": "text"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "tracelogkit-loki" },
+      "description": "按 task_id 查询该任务的所有执行日志（包括首次执行、重试等）。",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 6 },
+      "id": 2,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "expr": "{project=\"$project\"} | json | task_id=\"$task_id\"",
+          "refId": "A"
+        }
+      ],
+      "title": "按 task_id 查询（任务的所有执行）",
+      "type": "logs"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "tracelogkit-loki" },
+      "description": "按 trace_id 查询单次执行的详细链路日志。",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 18 },
+      "id": 3,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "expr": "{project=\"$project\"} | json | trace_id=\"$trace_id\"",
+          "refId": "A"
+        }
+      ],
+      "title": "按 trace_id 查询（单次执行）",
+      "type": "logs"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "tracelogkit-loki" },
+      "description": "按 request_id 查询（可选）。",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 30 },
+      "id": 4,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "expr": "{project=\"$project\"} | json | request_id=\"$request_id\"",
+          "refId": "A"
+        }
+      ],
+      "title": "按 request_id 查询（可选）",
+      "type": "logs"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "tracelogkit-loki" },
+      "description": "按 service 聚合该 trace 的日志量。",
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 42 },
+      "id": 5,
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "none" }
+      },
+      "targets": [
+        {
+          "expr": "sum by (service) (count_over_time({project=\"$project\"} | json | trace_id=\"$trace_id\" | label_format service=\"{{.service}}\" [1m]))",
+          "legendFormat": "{{service}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Services (from logs, grouped by service)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["tracelogkit", "drilldown"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": false, "text": "draw", "value": "draw" },
+        "hide": 0,
+        "label": "project",
+        "name": "project",
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": { "selected": false, "text": "", "value": "" },
+        "hide": 0,
+        "label": "task_id",
+        "name": "task_id",
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": { "selected": false, "text": "", "value": "" },
+        "hide": 0,
+        "label": "trace_id",
+        "name": "trace_id",
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": { "selected": false, "text": "", "value": "" },
+        "hide": 0,
+        "label": "request_id",
+        "name": "request_id",
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Drilldown",
+  "uid": "tracelogkit_drilldown",
+  "version": 1
+}
+
