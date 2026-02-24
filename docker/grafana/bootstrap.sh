@@ -68,5 +68,26 @@ for f in /resources/dashboards/*.json; do
     --data "{\"dashboard\":${payload},\"folderUid\":\"${folder_uid}\",\"overwrite\":true}" >/dev/null
 done
 
+echo "[bootstrap] applying alert rules"
+for f in /resources/alerting/*.json; do
+  [ -f "$f" ] || continue
+  echo "  - $(basename "$f")"
+  payload="$(cat "$f")"
+  uid="$(echo "${payload}" | sed -n 's/.*"uid"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
+  if [ -n "$uid" ]; then
+    if curl -sS -u "${GRAFANA_USER}:${GRAFANA_PASSWORD}" "${GRAFANA_URL}/api/v1/provisioning/alert-rules/${uid}" 2>/dev/null | grep -q '"uid"'; then
+      curl -sS -u "${GRAFANA_USER}:${GRAFANA_PASSWORD}" \
+        -H "Content-Type: application/json" \
+        -X PUT "${GRAFANA_URL}/api/v1/provisioning/alert-rules/${uid}" \
+        --data "${payload}" >/dev/null 2>&1 || true
+    else
+      curl -sS -u "${GRAFANA_USER}:${GRAFANA_PASSWORD}" \
+        -H "Content-Type: application/json" \
+        -X POST "${GRAFANA_URL}/api/v1/provisioning/alert-rules" \
+        --data "${payload}" >/dev/null 2>&1 || true
+    fi
+  fi
+done
+
 echo "[bootstrap] done"
 

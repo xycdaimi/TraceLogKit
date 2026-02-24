@@ -1,0 +1,12 @@
+# Prometheus file_sd 要求 target 格式为 host:port，不要加 http:// 前缀
+- targets:
+    - "192.168.15.16:8000"
+  labels:
+    service: "draw-spec-main"
+    job: "draw-spec"
+
+- targets:
+    - "192.168.15.16:8001"
+  labels:
+    service: "draw-spec-box"
+    job: "draw-spec"

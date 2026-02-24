@@ -1,0 +1,324 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "description": "**告警说明**：当某服务的错误率超过 5% 时触发告警（即成功率低于 95%）。\n\n**修改阈值**：\n1. 编辑 `docker/grafana/resources/alerting/error_rate_rule.json`\n2. 将 `evaluator.params` 中的 `[5]` 改为目标值（如 `[10]` 即错误率 10%）\n3. 重新部署或执行 bootstrap 使配置生效\n\n**或在 UI 中修改**（若规则可编辑）：\n1. **Alerting** → **Alert rules** → 「服务错误率过高」→ 编辑\n2. 在 Condition 的 Threshold 中修改数值\n3. 保存\n\n**指标要求**：服务需暴露 `http_server_requests_total`（或 `http_requests_total`），且包含 `code` label 用于区分 4xx/5xx 错误。",
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "content": "",
+        "mode": "markdown"
+      },
+      "title": "使用说明",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "tracelogkit-prometheus"
+      },
+      "description": "各服务的 4xx/5xx 错误率（百分比）。超过 5% 会触发告警（成功率低于 95%）。",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 2
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "100 * ((sum by (job) (rate(http_server_requests_total{code=~\"[45]..\"}[1m])) or on(job) (sum by (job) (rate(http_server_requests_total[1m])) * 0)) / sum by (job) (rate(http_server_requests_total[1m])))",
+          "legendFormat": "{{job}}",
+          "refId": "A"
+        }
+      ],
+      "title": "错误率 (%) - 按 job",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "tracelogkit-prometheus"
+      },
+      "description": "按 service 维度的错误率（http_server_requests_total）。无 4xx/5xx 的服务显示 0%。",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 2
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "100 * ((sum by (service) (rate(http_server_requests_total{code=~\"[45]..\"}[1m])) or on(service) (sum by (service) (rate(http_server_requests_total[1m])) * 0)) / sum by (service) (rate(http_server_requests_total[1m])))",
+          "legendFormat": "{{service}}",
+          "refId": "A"
+        }
+      ],
+      "title": "错误率 (%) - 按 service",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "tracelogkit-prometheus"
+      },
+      "description": "各服务的成功率（非 4xx/5xx 请求占比）。低于 95% 会触发告警。",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 95
+              },
+              {
+                "color": "green",
+                "value": 98
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "100 * (sum by (job) (rate(http_server_requests_total{code!~\"[45]..\"}[1m])) / sum by (job) (rate(http_server_requests_total[1m])))",
+          "legendFormat": "{{job}}",
+          "refId": "A"
+        }
+      ],
+      "title": "成功率 (%) - 按 job",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "tracelogkit-prometheus"
+      },
+      "description": "各服务的成功率（非 4xx/5xx 请求占比）。低于 95% 会触发告警。",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 95
+              },
+              {
+                "color": "green",
+                "value": 98
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "100 * (sum by (service) (rate(http_server_requests_total{code!~\"[45]..\"}[1m])) / sum by (service) (rate(http_server_requests_total[1m])))",
+          "legendFormat": "{{service}}",
+          "refId": "A"
+        }
+      ],
+      "title": "成功率 (%) - 按 service",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana",
+        "uid": "-- Grafana --"
+      },
+      "description": "当前触发的告警列表。",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 4,
+      "options": {
+        "maxItems": 20,
+        "sortOrder": 1,
+        "dashboardAlerts": false,
+        "stateFilter": {
+          "firing": true,
+          "normal": false,
+          "noData": false,
+          "error": false,
+          "pending": false
+        }
+      },
+      "title": "告警列表（Firing）",
+      "type": "alertlist"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": [
+    "tracelogkit",
+    "alert",
+    "error-rate"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Service Error Rate",
+  "uid": "tracelogkit_service_error_rate",
+  "version": 1
+}

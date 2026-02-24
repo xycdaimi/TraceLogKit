@@ -1,9 +1,11 @@
-# 示例：动态监控目标配置文件
-# 文件名可以任意，Prometheus 会自动读取此目录下的所有 .yml 文件
-# 修改此文件后，Prometheus 会在 30 秒内自动重新加载（refresh_interval: 30s）
-# 
-# 注意：此文件是示例文件，不会被 Prometheus 读取（文件扩展名为 .example）
-# 复制此文件并重命名为 .yml 扩展名（如 my-services.yml）即可生效
+# 示例：Prometheus 监控目标配置文件
+#
+# 使用方式：
+# 1. 复制此文件并重命名为 .yml 扩展名（如 my-services.yml）
+# 2. 根据你的项目修改 targets 和 labels
+# 3. 容器启动时 targets 目录会挂载到 Prometheus，无需重启即可生效
+#
+# Prometheus 会自动读取此目录下的所有 .yml 文件，约 30 秒刷新一次
 
 # 示例 1：单个服务
 - targets:

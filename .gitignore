@@ -48,8 +48,6 @@ docker/promtail/promtail-positions/*.yaml
 docker/loki/loki.yaml
 docker/prometheus/prometheus.yml
 docker/promtail/promtail.yaml
-docker/prometheus/targets/external-services.yml
-
 # ============================================
 # 日志文件
 # ============================================

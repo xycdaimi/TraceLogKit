@@ -176,41 +176,9 @@ Promtail 为**白名单模式**：如果不配置任何过滤规则，默认不�
 - **配置**：Consul 默认端口为 8500
 - **示例**：`CONSUL_PORT=8500`
 
-**说明**：配置 Consul 后，Prometheus 可以通过服务发现自动发现和抓取 `api-gateway` 和 `model-forwarder` 的指标，无需手动配置静态目标。
+**说明**：配置 Consul 后，Prometheus 可以通过服务发现自动发现和抓取服务指标。
 
-### Prometheus 抓取目标配置（可选）
-
-#### `PROM_API_GATEWAY_TARGET`
-- **用途**：`api-gateway` 的静态抓取目标（覆盖 Consul SD）
-- **配置**：格式为 `host:port`，仅在需要覆盖 Consul SD 时配置
-- **示例**：`PROM_API_GATEWAY_TARGET=api-gateway:8000`
-- **注意**：默认通过 Consul SD 自动发现，通常不需要配置
-
-#### `PROM_MODEL_FORWARDER_TARGET`
-- **用途**：`model-forwarder` 的静态抓取目标（覆盖 Consul SD）
-- **配置**：格式为 `host:port`，仅在需要覆盖 Consul SD 时配置
-- **示例**：`PROM_MODEL_FORWARDER_TARGET=model-forwarder:8001`
-- **注意**：默认通过 Consul SD 自动发现，通常不需要配置
-
-#### `PROM_INGRESS_TARGET`
-- **用途**：Ingress 服务的抓取目标
-- **配置**：格式为 `host:port`
-- **示例**：`PROM_INGRESS_TARGET=ingress-service:80`
-
-#### `PROM_LOG_TARGET`
-- **用途**：日志服务的抓取目标
-- **配置**：格式为 `host:port`
-- **示例**：`PROM_LOG_TARGET=log-service:9999`
-
-#### `PROM_REDIS_EXPORTER_TARGET`
-- **用途**：Redis Exporter 的抓取目标（覆盖默认值）
-- **配置**：格式为 `host:port`，默认值为 `redis-exporter:9121`
-- **示例**：`PROM_REDIS_EXPORTER_TARGET=redis-exporter:9121`
-
-#### `PROM_POSTGRES_EXPORTER_TARGET`
-- **用途**：Postgres Exporter 的抓取目标（覆盖默认值）
-- **配置**：格式为 `host:port`，默认值为 `postgres-exporter:9187`
-- **示例**：`PROM_POSTGRES_EXPORTER_TARGET=postgres-exporter:9187`
+**Prometheus 抓取目标**：本项目通过 `docker/prometheus/targets/` 目录下的 YAML 文件配置监控目标。请参考 `targets/example.yml.example` 示例，复制并重命名为 `.yml` 后编写自己的监控目标。容器启动时会将该目录挂载到 Prometheus，无需环境变量配置。
 
 ### Loki 存储配置
 

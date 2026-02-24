@@ -23,7 +23,7 @@ if errorlevel 1 (
 REM Stop Grafana
 echo [1/6] Stopping Grafana...
 cd /d "%SCRIPT_DIR%..\docker\grafana"
-docker compose down 2>nul
+docker compose down -v 2>nul
 echo [OK] Grafana stopped
 
 REM Stop Promtail

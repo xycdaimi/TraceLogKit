@@ -39,7 +39,7 @@
     },
     {
       "datasource": { "type": "prometheus", "uid": "tracelogkit-prometheus" },
-      "description": "5xx error rate (all services).",
+      "description": "4xx/5xx error rate (all services).",
       "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 }, "overrides": [] },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "id": 2,
@@ -49,12 +49,12 @@
       },
       "targets": [
         {
-          "expr": "100 * (sum(rate(http_requests_total{status=~\"5..\"}[5m])) by (service) / sum(rate(http_requests_total[5m])) by (service))",
+          "expr": "100 * (sum(rate(http_requests_total{code=~\"[45]..\"}[5m])) by (service) / sum(rate(http_requests_total[5m])) by (service))",
           "legendFormat": "{{service}}",
           "refId": "A"
         }
       ],
-      "title": "5xx error rate (%) by service",
+      "title": "4xx/4xx/5xx error rate (%) by service",
       "type": "timeseries"
     },
     {
