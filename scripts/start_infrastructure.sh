@@ -29,15 +29,9 @@ fi
 echo "[OK] Docker is running"
 echo ""
 
-trace_net="${TRACELOGKIT_NETWORK_NAME:-tracelogkit-network}"
-if [ -f "$SCRIPT_DIR/../.env" ]; then
-  v="$(grep -E '^TRACELOGKIT_NETWORK_NAME=' "$SCRIPT_DIR/../.env" | tail -n1 | cut -d= -f2- | tr -d '\r' | tr -d ' ')"
-  if [ -n "$v" ]; then trace_net="$v"; fi
-fi
-if ! docker network inspect "$trace_net" >/dev/null 2>&1; then
-  echo "[INFO] Creating docker network: $trace_net"
-  docker network create "$trace_net" >/dev/null
-fi
+# Network is created by docker compose when first service (Tempo) starts.
+# Do NOT pre-create with "docker network create" - that creates a plain network
+# without compose labels, causing: "network has incorrect label com.docker.compose.network"
 
 echo "[1/6] Starting Tempo..."
 cd "$SCRIPT_DIR/../docker/tempo"

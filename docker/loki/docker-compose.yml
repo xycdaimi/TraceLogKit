@@ -4,8 +4,8 @@ services:
     container_name: tracelogkit-loki
     hostname: tracelogkit-loki
     restart: unless-stopped
-    # 使用新的 entrypoint 脚本
-    entrypoint: /etc/loki/entrypoint.sh
+    # 使用 sh 执行脚本，避免宿主机文件无执行权限导致 "permission denied"
+    entrypoint: ["/bin/sh", "/etc/loki/entrypoint.sh"]
     ports:
       - "3100:3100" # Loki HTTP API (Grafana datasource)
     volumes:

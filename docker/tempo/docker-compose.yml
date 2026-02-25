@@ -1,6 +1,6 @@
 services:
   tracelogkit-tempo:
-    image: grafana/tempo:latest
+    image: grafana/tempo:2.9.0
     container_name: tracelogkit-tempo
     hostname: tracelogkit-tempo
     restart: unless-stopped
