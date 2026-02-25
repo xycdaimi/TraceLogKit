@@ -1,0 +1,3 @@
+{
+  "template": "{{ define \"dingding.title\" }}[监控报警]: [{{ .Status | toUpper }}{{ if eq .Status \"firing\" }}:{{ .Alerts.Firing | len }}{{ if gt (.Alerts.Resolved | len) 0 }}, RESOLVED:{{ .Alerts.Resolved | len }}{{ end }}{{ end }}]{{ end }}"
+}

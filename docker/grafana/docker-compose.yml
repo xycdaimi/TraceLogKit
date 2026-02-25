@@ -13,6 +13,7 @@ services:
       - TZ=${TZ:-Asia/Shanghai}
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL:-}
     volumes:
       - grafana-data:/var/lib/grafana
     networks:

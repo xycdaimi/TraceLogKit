@@ -89,5 +89,17 @@ for f in /resources/alerting/*.json; do
   fi
 done
 
+echo "[bootstrap] applying notification templates"
+for f in /resources/alerting/templates/*.json; do
+  [ -f "$f" ] || continue
+  name="$(basename "$f" .json)"
+  echo "  - $name"
+  payload="$(cat "$f")"
+  curl -sS -u "${GRAFANA_USER}:${GRAFANA_PASSWORD}" \
+    -H "Content-Type: application/json" \
+    -X PUT "${GRAFANA_URL}/api/v1/provisioning/templates/${name}" \
+    --data "${payload}" >/dev/null
+done
+
 echo "[bootstrap] done"
 
