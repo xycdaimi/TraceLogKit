@@ -37,6 +37,15 @@ limits_config:
   reject_old_samples: true
   reject_old_samples_max_age: 168h
   allow_structured_metadata: true
+  # 提高查询并发，避免 Grafana 多面板同时查询时 "too many outstanding requests"
+  max_query_parallelism: 32
+  split_queries_by_interval: 15m
+
+query_scheduler:
+  max_outstanding_requests_per_tenant: 4096
+
+frontend:
+  max_outstanding_per_tenant: 4096
 
 chunk_store_config:
   max_look_back_period: 168h

@@ -1,0 +1,108 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    { "asDropdown": false, "icon": "external link", "includeVars": true, "keepTime": true, "tags": [], "targetBlank": false, "title": "Stack", "type": "link", "url": "/d/tracelogkit_stack" },
+    { "asDropdown": false, "icon": "external link", "includeVars": true, "keepTime": true, "tags": [], "targetBlank": false, "title": "Business Metrics", "type": "link", "url": "/d/tracelogkit_business_metrics" },
+    { "asDropdown": false, "icon": "external link", "includeVars": true, "keepTime": true, "tags": [], "targetBlank": false, "title": "Logs", "type": "link", "url": "/d/tracelogkit_logs" }
+  ],
+  "panels": [
+    {
+      "description": "**流程**：从 Logs 点击 task_id 进入，或手动输入 task_id。\n\n1. **Trace 列表**：该任务的所有执行（首次+重试），按时间排序\n2. **点击 traceID**：在下方展示该 trace 的链路可视化（waterfall）\n3. **在 waterfall 中点击 span**：可反查该 span 的 Loki 日志（tracesToLogs）\n4. **重试分析**：多条 trace = 多次执行，对比各次可判断重试次数、是否成功、失败原因",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "content": "", "mode": "markdown" },
+      "title": "使用说明",
+      "type": "text"
+    },
+    {
+      "datasource": { "type": "tempo", "uid": "tracelogkit-tempo" },
+      "description": "输入 task_id 查询该任务的所有 trace（首次执行、重试1、重试2…）。点击 traceID 列在下方展示链路。",
+      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 6 },
+      "id": 2,
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "traceID" },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  { "title": "查看链路", "url": "/d/tracelogkit_traces?var-task_id=$task_id&var-trace_id=${__value.raw}" }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "Start time" }]
+      },
+      "targets": [
+        {
+          "datasource": { "type": "tempo", "uid": "tracelogkit-tempo" },
+          "queryType": "traceqlSearch",
+          "refId": "A",
+          "query": "{ span.task_id = \"$task_id\" }",
+          "limit": 50
+        }
+      ],
+      "title": "Trace 列表（按 task_id）",
+      "transformations": [
+        { "id": "merge", "options": {} },
+        { "id": "organize", "options": { "excludeByName": { "nested": true }, "indexByName": {}, "renameByName": { "traceID": "traceID", "traceDuration": "Duration", "startTime": "Start time" } } }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": { "type": "tempo", "uid": "tracelogkit-tempo" },
+      "description": "展示选中 trace 的链路可视化。从上方表格点击 traceID 传入，或手动输入 trace_id。",
+      "gridPos": { "h": 20, "w": 24, "x": 0, "y": 20 },
+      "id": 3,
+      "options": {},
+      "targets": [
+        {
+          "datasource": { "type": "tempo", "uid": "tracelogkit-tempo" },
+          "queryType": "traceql",
+          "refId": "A",
+          "query": "${trace_id}"
+        }
+      ],
+      "title": "Trace 时间线（Waterfall）",
+      "type": "traces"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["tracelogkit", "traces", "tempo"],
+  "templating": {
+    "list": [
+      { "name": "task_id", "label": "task_id", "type": "textbox", "query": "", "hide": 0, "current": { "selected": false, "text": "", "value": "" } },
+      { "name": "trace_id", "label": "trace_id", "type": "textbox", "query": "", "hide": 0, "current": { "selected": false, "text": "", "value": "" } }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Traces",
+  "uid": "tracelogkit_traces",
+  "version": 1
+}

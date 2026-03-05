@@ -1,0 +1,54 @@
+{
+  "title": "核心组件不可用（UP=0）",
+  "ruleGroup": "infra",
+  "folderUID": "tracelogkit",
+  "noDataState": "OK",
+  "execErrState": "Error",
+  "for": "1m",
+  "uid": "infra_component_down_1",
+  "condition": "B",
+  "annotations": {
+    "summary": "组件 {{ $labels.job }} 不可用（UP=0）",
+    "description": "UP=0，持续 1m。"
+  },
+  "labels": { "severity": "critical" },
+  "data": [
+    {
+      "refId": "A",
+      "queryType": "",
+      "relativeTimeRange": { "from": 300, "to": 0 },
+      "datasourceUid": "tracelogkit-prometheus",
+      "model": {
+        "expr": "max by (job) (up{job=~\"tracelogkit-(prometheus|otel-collector|tempo|loki)\"})",
+        "hide": false,
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "A"
+      }
+    },
+    {
+      "refId": "B",
+      "queryType": "",
+      "relativeTimeRange": { "from": 0, "to": 0 },
+      "datasourceUid": "-100",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [1], "type": "lt" },
+            "operator": { "type": "and" },
+            "query": { "params": ["A"] },
+            "reducer": { "params": [], "type": "last" },
+            "type": "query"
+          }
+        ],
+        "datasource": { "type": "__expr__", "uid": "-100" },
+        "hide": false,
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "B",
+        "type": "classic_conditions"
+      }
+    }
+  ]
+}
+

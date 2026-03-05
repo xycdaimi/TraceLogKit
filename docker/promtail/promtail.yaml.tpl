@@ -19,7 +19,7 @@ scrape_configs:
         target_label: __tmp_container
         replacement: '$1'
 
-      # 过滤规则（变量全空 -> drop all；变量非空 -> keep 匹配项）
+      # 过滤规则（变量全空 -> drop all；变量非空 -> OR 逻辑，匹配任一即 keep）
       ${FILTER_RULES}
 
       # 清理临时标签，避免污染 Loki labels
@@ -38,23 +38,17 @@ scrape_configs:
       - json:
           expressions:
             service: service
+            project: project   # 必须，禁止派生
 
       - match:
           selector: '{__error__!=""}'
           action: drop
           drop_counter_reason: non_json_or_json_parse_error
 
-      # 从 JSON 字段 service 派生 project：取第一个 '-' 之前的前缀
-      # 例：service="foo-bar-baz" -> project="foo"
-      - regex:
-          source: service
-          expression: '^(?P<project>[^-]+)(?:-.*)?$'
-
-      # 最终只输出一个业务标签：project
       - labels:
           project:
 
-      # project 为空则丢弃，避免把空标签值写入 Loki
+      # project 为空则丢弃
       - match:
           selector: '{project=""}'
           action: drop

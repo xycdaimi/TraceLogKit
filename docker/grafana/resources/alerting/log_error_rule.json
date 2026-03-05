@@ -1,15 +1,15 @@
 {
-  "title": "服务出现错误日志",
-  "ruleGroup": "log_error_rate",
+  "title": "项目任务失败率过高",
+  "ruleGroup": "incident",
   "folderUID": "tracelogkit",
   "noDataState": "OK",
   "execErrState": "Error",
-  "for": "0s",
+  "for": "2m",
   "uid": "log_error_rule_1",
-  "condition": "B",
+  "condition": "C",
   "annotations": {
-    "summary": "有服务出现 error 级别日志",
-    "description": "过去 5 分钟内检测到错误日志，请查看 Log Error Rate 面板确认具体服务。"
+    "summary": "项目 {{ $labels.project }} 任务失败率过高",
+    "description": "失败率 {{ printf \"%.2f\" $values.B.Value }}%，超过 5%（5m）。"
   },
   "labels": { "severity": "critical" },
   "data": [
@@ -19,7 +19,7 @@
       "relativeTimeRange": { "from": 300, "to": 0 },
       "datasourceUid": "tracelogkit-loki",
       "model": {
-        "expr": "sum by (service) (count_over_time({project=~\".+\"} | json | level=\"error\" [5m]))",
+        "expr": "( (count by (project) (count_over_time({project=~\".+\"} | json | label_format task_id=\"{{.task_id}}\" | task_id=~\".+\" | status=~\"(?i)failed\" [5m])) * 100) / count by (project) (count_over_time({project=~\".+\"} | json | label_format task_id=\"{{.task_id}}\" | task_id=~\".+\" [5m])) )",
         "hide": false,
         "intervalMs": 1000,
         "maxDataPoints": 43200,
@@ -32,21 +32,32 @@
       "relativeTimeRange": { "from": 0, "to": 0 },
       "datasourceUid": "-100",
       "model": {
-        "conditions": [
-          {
-            "evaluator": { "params": [0], "type": "gt" },
-            "operator": { "type": "and" },
-            "query": { "params": ["A"] },
-            "reducer": { "params": [], "type": "max" },
-            "type": "query"
-          }
-        ],
-        "datasource": { "type": "__expr__", "uid": "-100" },
+        "expression": "A",
+        "reducer": "last",
         "hide": false,
         "intervalMs": 1000,
         "maxDataPoints": 43200,
         "refId": "B",
-        "type": "classic_conditions"
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "C",
+      "queryType": "",
+      "relativeTimeRange": { "from": 0, "to": 0 },
+      "datasourceUid": "-100",
+      "model": {
+        "expression": "B",
+        "conditions": [
+          {
+            "evaluator": { "params": [5], "type": "gt" }
+          }
+        ],
+        "hide": false,
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "C",
+        "type": "threshold"
       }
     }
   ]

@@ -9,17 +9,15 @@
       {
         "name": "trace_id",
         "matcherRegex": "\"trace_id\"\\s*:\\s*\"([0-9a-fA-F]{32})\"",
-        "url": "$${__value.raw}",
-        "datasourceUid": "tracelogkit-tempo"
+        "url": "/d/tracelogkit_traces?var-trace_id=${__value.raw}",
+        "urlDisplayLabel": "Traces 面板"
       },
       {
         "name": "task_id",
         "matcherRegex": "\"task_id\"\\s*:\\s*\"([^\"]+)\"",
-        "url": "/explore?left={\"datasource\":\"tracelogkit-tempo\",\"queries\":[{\"queryType\":\"traceql\",\"query\":\"{span.task_id=\\\"$${__value.raw}\\\"}\"}]}",
-        "datasourceUid": "tracelogkit-tempo",
-        "urlDisplayLabel": "View traces by task_id"
+        "url": "/d/tracelogkit_traces?var-task_id=${__value.raw}",
+        "urlDisplayLabel": "Traces 面板"
       }
     ]
   }
 }
-

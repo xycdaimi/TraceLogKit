@@ -1,10 +1,12 @@
 # TraceLogKit 自身服务的监控配置
 # 这些是 TraceLogKit 基础设施服务的监控目标
 
+# job 必须与 project 一致；面板用 project!~"tracelogkit-.*" 排除 infra
 # Prometheus 自身
 - targets:
     - "tracelogkit-prometheus:9090"
   labels:
+    project: "tracelogkit-prometheus"
     service: "tracelogkit-prometheus"
     job: "tracelogkit-prometheus"
 
@@ -12,6 +14,7 @@
 - targets:
     - "tracelogkit-otel-collector:8888"
   labels:
+    project: "tracelogkit-otel-collector"
     service: "tracelogkit-otel-collector"
     job: "tracelogkit-otel-collector"
 
@@ -19,6 +22,7 @@
 - targets:
     - "tracelogkit-tempo:3200"
   labels:
+    project: "tracelogkit-tempo"
     service: "tracelogkit-tempo"
     job: "tracelogkit-tempo"
 
@@ -26,5 +30,6 @@
 - targets:
     - "tracelogkit-loki:3100"
   labels:
+    project: "tracelogkit-loki"
     service: "tracelogkit-loki"
     job: "tracelogkit-loki"

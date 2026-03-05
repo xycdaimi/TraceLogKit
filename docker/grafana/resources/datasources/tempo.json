@@ -13,7 +13,7 @@
       "filterByTraceID": false,
       "filterBySpanID": false,
       "customQuery": true,
-      "query": "{$${__tags}} | json | trace_id=\"$${__trace.traceId}\""
+      "query": "{project=\"${__span.tags.project}\"} | json | trace_id=\"${__trace.traceId}\""
     }
   }
 }

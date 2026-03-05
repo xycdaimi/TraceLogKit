@@ -1,23 +1,50 @@
 
 # 客户端 Tempo（Tracing）数据规范（OTel → Tempo）
 
+## 本规范管什么
+
+**只管追踪**：业务进程通过 OpenTelemetry SDK 上报的 Trace/Span，经 OTel Collector 写入 Tempo。与 Prometheus（指标）、Loki（日志）是**三套独立系统**。**唯有 Tempo 与 Loki 有直接关系**：通过 `trace_id` 实现 Trace↔Log 互跳。
+
 ## 目标
 
-让每条 Trace/Span 都携带必要的属性，从而在 Grafana 里实现：
+让每条 Trace/Span 都携带必要的属性，支持：
 
-- 从 **Tempo Trace** 一键反查到 **Loki 日志**（自动限定到同一个 `project`）
-- 在日志中按 `trace_id / task_id / request_id / service` 过滤，完成全链路排查
 - 在 Tempo 中按 `trace_id` 查看单次执行的链路
 - 在 Tempo 中按 `task_id` 查看任务的所有执行链路（聚合多个 trace_id）
+- 从 **Tempo Trace** 一键反查到 **Loki 日志**（需日志侧含相同 `trace_id`）
+- 在 **Loki 日志**中点击 `trace_id` 一键跳转到 Tempo
+
+## 与其他系统的关系
+
+| 系统 | 与 Tempo 的关系 | 客户端需知 |
+|------|-----------------|------------|
+| **Prometheus（指标）** | **无直接关系**。指标和追踪是不同数据。 | 本规范不涉及 Prometheus。若需指标，见《客户端普罗米修斯规范》。 |
+| **Loki（日志）** | **有直接关系**。通过 `trace_id` 实现 Trace↔Log 互跳。 | 若要做 Trace↔Log 互跳，**日志里必须含 `trace_id`**（来自 OTel 上下文）。见《客户端容器日志规范》第 3 节。 |
+
+## 职责边界
+
+- **客户端**：通过 OTel SDK 上报 spans 时，必须设置 `project`、`service.name` 等 Resource Attributes。取值由部署/配置决定（如 service.name=draw-gateway 则 project=draw）。
+- **服务端（OTel Collector / Tempo）**：只负责接收、存储、查询，**不做** project 派生或任何转换。
+
+## 术语说明（避免误解）
+
+- 本文的“客户端”指**产生 Trace/Span 的业务进程**（服务端/worker/容器内应用等），即：进程内集成 OpenTelemetry SDK 或自动探针，并通过 OTLP 上报到 Tempo。
+- “Tempo/Collector”是后端组件：**只负责接收/存储/查询**，不负责“给请求发号”。
+
+## trace_id 的来源与传播（关键逻辑）
+
+- `trace_id` **由 OpenTelemetry SDK/自动探针在链路起点创建 Root Span 时生成**，并在链路中通过 context propagation 传播（常见为 W3C Trace Context：`traceparent`/`tracestate`）。
+- Tempo/Collector **不会生成你的业务请求的 `trace_id`**；它们只接收并存储你上报的 spans。
+- 因此：
+  - ✅ 任何需要参与 tracing 的服务，都必须**提取/注入**传播上下文（而不是“各自随机生成 trace_id”）。
+  - ✅ 链路追踪日志中的 `trace_id` 必须来自**当前 OTel 上下文**（或从 `traceparent` 提取后的上下文），而不是自造一个“伪 trace_id”。
 
 ## 强制约定（必须遵守）
 
 - **project 键名**：统一使用 `project`
-- **project 值**：与日志里 `service` 推导出的项目名一致
-  - 规则：`project = service` 的第一个 `-` 前缀
-  - 示例：`service="draw-spec-gateway"` → `project="draw"`
+- **project 值**：由客户端在 Resource Attributes 中设置（如 service.name=draw-gateway 则 project=draw）。OTel Collector / Tempo **不派生**，只存储客户端上报的值。
 - **服务名键名（Tracing）**：统一使用 `service.name`（OTel 标准 Resource Attribute）
-  - 建议其值与日志 JSON 字段 `service` 保持一致（同一套服务命名）
+  - 若需在 Grafana 中按同一维度查询，与日志 `service`、Prometheus `service` label 命名约定保持一致
 
 ## 注入方式（推荐：Resource Attributes）
 
@@ -34,7 +61,7 @@
 
 说明：
 - `service.name` 是 OTel 标准字段，Grafana/Tempo/OTel 工具链对它有最佳支持
-- `project` 是你的业务维度字段，用于和 Loki 的 `{project="..."}` 对齐
+- `project` 是业务维度字段，用于 Grafana 中按 project 过滤
 
 ## Span Attributes（必须包含）
 
@@ -46,7 +73,7 @@
 
 **强制约束**：
 - ✅ 所有 Span 都**必须包含** `task_id` 属性
-- ✅ trace_id 和 task_id 是强制绑定的（有 trace 就有 task_id）
+- ✅ 只要存在 Span，就天然存在 `trace_id`；并且该 Trace 内的所有 Span 都必须带 `task_id`
 
 ### task_id 在 Span 中的使用（强制要求）
 
@@ -91,15 +118,15 @@ with tracer.start_as_current_span("process_task") as span:
 - `trace_id`：32 位十六进制字符串（不带 `0x`，不带 `-`）
 - `span_id`：16 位十六进制字符串
 
-## 与日志关联的最小字段集合（供日志侧对齐）
+## 与日志关联（log↔trace correlation）的最小字段集合（供日志侧对齐）
 
 不是所有日志都是"请求链路日志"。这里的字段要求仅针对**你希望与 Tempo Trace 关联**的那类日志（例如请求入口、跨服务调用、关键业务事件等）。
 
-为了能在 Loki 侧用 `| json` 解析并按 trace 维度过滤，约定如下：
+**Trace↔Log 互跳的前提**：日志里必须含 `trace_id`（来自 OTel 上下文）。约定如下：
 
-- **如果该条日志包含 `trace_id`**（表示它属于某条 trace 的一部分），则**必须同时包含**：
-  - `service`：字符串，容器名（用于 promtail 派生 project）
-  - `trace_id`：字符串（32 hex）
+- **链路追踪日志必须包含**（用于与 Tempo Trace 互跳）：
+  - `service`：字符串，容器名（Promtail 从 JSON 提取 project，必须提供，禁止派生）
+  - `trace_id`：字符串（32 hex，来自 OTel 上下文）
   - `task_id`：字符串（格式建议：`task_<标识符>`）- **强制要求**
   
 - 同时**强烈建议**包含：
@@ -107,14 +134,16 @@ with tracer.start_as_current_span("process_task") as span:
   - `request_id`：字符串（便于按请求维度检索）
 
 **强制约束**：
-- ✅ `trace_id` 和 `task_id` **必须成对出现**
-- ✅ 如果存在 `trace_id`，那么必定有 `task_id`
-- ✅ 如果存在 `task_id`，那么必定有 `trace_id`
+- ✅ 链路追踪日志中 `trace_id` 和 `task_id` **必须成对出现**
 - ✅ `task_id` 与 `trace_id` 是一对多关系
   - 一个任务可能有多次执行（首次、重试等），每次执行有独立的 `trace_id`
   - 用 `task_id` 可以追踪任务的所有执行历史
 
-对于不属于请求链路的普通运行日志，可以不包含 `trace_id/task_id/span_id/request_id`（这些字段要么全有，要么全无），但仍要保持 JSON 结构化与包含 `service`（否则可能被采集侧丢弃，取决于 Promtail 策略）。
+> 说明：如果某一端（例如终端 App）无法获取 `trace_id`，也不要随机生成。可以让服务端把 `trace_id` 回传给终端侧记录，或改用 `request_id` 做关联键。
+
+对于不属于请求链路的普通运行日志，可以不包含 `trace_id/task_id/span_id/request_id`（这些字段要么全有，要么全无），但仍要保持 JSON 结构化与包含 `service`（否则可能被采集侧丢弃）。
+
+**部署侧需知**：Trace↔Log 互跳要求 Promtail 已配置为采集该容器。Promtail 通过四个过滤规则（容器名列表、容器名正则、Compose 项目、Compose 服务）控制采集范围，OR 逻辑（匹配任一即采集），四个参数全空则禁止采集。详见《客户端容器日志规范》。
 
 ## Tempo 查询方式
 
@@ -141,15 +170,18 @@ with tracer.start_as_current_span("process_task") as span:
 
 ### 在 Dashboard 中使用
 
-**Drilldown Dashboard**（支持多维度查询）：
-- 输入 **task_id**：查看该任务的所有执行日志（首次、重试等）
-- 输入 **trace_id**：查看单次执行的详细链路和日志
-- 输入 **request_id**：按请求 ID 过滤日志
-- 点击日志中的 trace_id 链接：跳转到 Tempo 查看单次执行链路
-- 点击日志中的 task_id 链接：跳转到 Tempo 查看任务的所有 Trace
+**Traces 面板**（`/d/tracelogkit_traces`）：
+1. **Trace 列表**：输入 task_id，按 TraceQL `{span.task_id="..."}` 查询该任务的所有 trace（首次执行、重试等）；列表仅展示 trace 级信息（traceID、Start time、Duration），点击 traceID 在下方展示链路
+2. **Trace 时间线（Waterfall）**：展示选中 trace 的 span 明细与调用关系；点击 span 可反查 Loki 日志（tracesToLogs）
+3. **重试分析**：多条 trace = 多次执行，对比各次可判断重试次数、是否成功、失败原因
+
+**从 Logs 跳转**：
+- 点击日志中的 `trace_id` 链接：跳转到 Tempo 查看单次执行链路
+- 点击日志中的 `task_id` 链接：跳转到 Traces 面板查看该任务的所有 Trace
 
 ### Grafana 数据源配置
 
 **Loki 数据源**已配置 derived fields：
-- `trace_id`：点击跳转到 Tempo 查看单次执行链路
-- `task_id`：点击跳转到 Tempo 查看任务的所有 Trace（使用 TraceQL 查询）
+- `trace_id`：点击跳转到 Traces 面板并展示单次执行链路
+- `task_id`：点击跳转到 Traces 面板并展示该任务的所有 Trace（TraceQL 查询）
+

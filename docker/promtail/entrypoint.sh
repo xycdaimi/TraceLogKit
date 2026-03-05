@@ -40,51 +40,66 @@ csv_to_re2_alternation_literals() {
   '
 }
 
-add_keep_filter() {
-  # Promtail relabel keep must specify regex + source_labels
-  # label should be written as __tmp_container etc (no quotes)
+# OR 逻辑：匹配任一规则即采集；一个都不匹配则丢弃
+# 实现：先设 __tmp_matched=0，各规则匹配时 replace 为 1，最后 keep __tmp_matched=1
+add_replace_match() {
   label=$1
   pattern=$2
   FILTER_RULES="${FILTER_RULES}
       - source_labels: [${label}]
         regex: '${pattern}'
-        action: keep"
+        target_label: __tmp_matched
+        replacement: '1'"
 }
 
-# 1) 容器名称列表过滤（精确匹配，逗号分隔）
+# 1) 初始化：所有 target 先标为未匹配
+FILTER_RULES="
+      - source_labels: [__tmp_container]
+        regex: '(.*)'
+        target_label: __tmp_matched
+        replacement: '0'"
+
+# 2) 各规则：匹配则设 __tmp_matched=1（OR：满足任一即可）
+# 规则 1：容器名称列表（精确匹配，逗号分隔）
 if ! is_blank "${PROMTAIL_CONTAINER_NAMES:-}"; then
   HAS_ANY_FILTER=true
   alts=$(csv_to_re2_alternation_literals "$PROMTAIL_CONTAINER_NAMES" || true)
   if ! is_blank "$alts"; then
-    add_keep_filter "__tmp_container" "^(${alts})$"
+    add_replace_match "__tmp_container" "^(${alts})$"
   fi
 fi
 
-# 2) 容器名称正则匹配（对规范化后的容器名匹配）
+# 规则 2：容器名称正则
 if ! is_blank "${PROMTAIL_CONTAINER_NAME_PATTERN:-}"; then
   HAS_ANY_FILTER=true
-  add_keep_filter "__tmp_container" "$PROMTAIL_CONTAINER_NAME_PATTERN"
+  add_replace_match "__tmp_container" "$PROMTAIL_CONTAINER_NAME_PATTERN"
 fi
 
-# 3) Compose 项目匹配（支持逗号列表或正则）
+# 规则 3：Compose 项目
 if ! is_blank "${PROMTAIL_COMPOSE_PROJECT:-}"; then
   HAS_ANY_FILTER=true
   if printf %s "$PROMTAIL_COMPOSE_PROJECT" | grep -q ','; then
     alts=$(csv_to_re2_alternation_literals "$PROMTAIL_COMPOSE_PROJECT" || true)
-    add_keep_filter "__meta_docker_container_label_com_docker_compose_project" "^(${alts})$"
+    add_replace_match "__meta_docker_container_label_com_docker_compose_project" "^(${alts})$"
   else
-    add_keep_filter "__meta_docker_container_label_com_docker_compose_project" "$PROMTAIL_COMPOSE_PROJECT"
+    add_replace_match "__meta_docker_container_label_com_docker_compose_project" "$PROMTAIL_COMPOSE_PROJECT"
   fi
 fi
 
-# 4) Compose 服务匹配（逗号分隔，"或"）
+# 规则 4：Compose 服务（逗号分隔）
 if ! is_blank "${PROMTAIL_COMPOSE_SERVICE:-}"; then
   HAS_ANY_FILTER=true
   alts=$(csv_to_re2_alternation_literals "$PROMTAIL_COMPOSE_SERVICE" || true)
   if ! is_blank "$alts"; then
-    add_keep_filter "__meta_docker_container_label_com_docker_compose_service" "^(${alts})$"
+    add_replace_match "__meta_docker_container_label_com_docker_compose_service" "^(${alts})$"
   fi
 fi
+
+# 3) 最终 keep：只保留至少匹配一个规则的容器
+FILTER_RULES="${FILTER_RULES}
+      - source_labels: [__tmp_matched]
+        regex: '1'
+        action: keep"
 
 # 如果没有任何过滤变量：显式 drop 掉所有容器（保证 0 采集）
 if [ "$HAS_ANY_FILTER" = "false" ]; then

@@ -1,15 +1,15 @@
 {
-  "title": "服务错误率过高",
-  "ruleGroup": "service_error_rate",
+  "title": "项目错误率过高",
+  "ruleGroup": "project_error_rate",
   "folderUID": "tracelogkit",
   "noDataState": "OK",
   "execErrState": "Error",
-  "for": "1m",
-  "uid": "service_error_rate_5",
-  "condition": "B",
+  "for": "30s",
+  "uid": "project_error_rate_5",
+  "condition": "C",
   "annotations": {
-    "summary": "服务 {{ $labels.job }} 错误率超过 5%（成功率低于 95%）",
-    "description": "过去 5 分钟错误率 {{ $values.B.Value }}%，持续 1 分钟。"
+    "summary": "项目 {{ $labels.project }} HTTP 错误率过高",
+    "description": "错误率 {{ printf \"%.2f\" $values.B.Value }}%，超过 5%（5m，持续 30s）。"
   },
   "labels": {
     "severity": "critical"
@@ -24,7 +24,7 @@
       },
       "datasourceUid": "tracelogkit-prometheus",
       "model": {
-        "expr": "100 * (sum by (job) (rate(http_server_requests_total{code=~\"[45]..\"}[5m])) / sum by (job) (rate(http_server_requests_total[5m])))",
+        "expr": "100 * (sum by (project) (rate(http_server_requests_total{code=~\"[45]..\"}[5m])) / sum by (project) (rate(http_server_requests_total[5m])))",
         "hide": false,
         "intervalMs": 1000,
         "maxDataPoints": 43200,
@@ -40,34 +40,38 @@
       },
       "datasourceUid": "-100",
       "model": {
+        "expression": "A",
+        "reducer": "last",
+        "hide": false,
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "B",
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "C",
+      "queryType": "",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "-100",
+      "model": {
+        "expression": "B",
         "conditions": [
           {
             "evaluator": {
               "params": [5],
               "type": "gt"
-            },
-            "operator": {
-              "type": "and"
-            },
-            "query": {
-              "params": ["A"]
-            },
-            "reducer": {
-              "params": [],
-              "type": "last"
-            },
-            "type": "query"
+            }
           }
         ],
-        "datasource": {
-          "type": "__expr__",
-          "uid": "-100"
-        },
         "hide": false,
         "intervalMs": 1000,
         "maxDataPoints": 43200,
-        "refId": "B",
-        "type": "classic_conditions"
+        "refId": "C",
+        "type": "threshold"
       }
     }
   ]
