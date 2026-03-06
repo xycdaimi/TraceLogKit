@@ -46,6 +46,29 @@
 - **服务名键名（Tracing）**：统一使用 `service.name`（OTel 标准 Resource Attribute）
   - 若需在 Grafana 中按同一维度查询，与日志 `service`、Prometheus `service` label 命名约定保持一致
 
+## 路径排除规则（探针/健康检查不追踪）
+
+**必须排除**：探针、健康检查、指标端点**不得**创建 Span 或上报 OTel。与《客户端普罗米修斯规范》保持一致。
+
+**需排除的路径**（不创建 Span、不上报）：
+
+- `/health`、`/healthz`、`/ready`、`/readyz`、`/live`、`/liveness`、`/ping`
+- `/metrics`（Prometheus 指标端点）
+- `/actuator/health`、`/actuator/info` 等 Spring Boot Actuator 健康端点
+
+**原因**：探针高频调用会产生大量无业务价值的 Trace，污染 Tempo 数据、影响查询和统计。
+
+**实现方式**（客户端优先，在 SDK/自动探针层排除）：
+
+| 语言/框架 | 配置方式 |
+|-----------|----------|
+| **Python Flask** | `FlaskInstrumentor().instrument_app(app, excluded_urls="/health,/metrics,/ready")` |
+| **Java Agent** | 环境变量 `OTEL_INSTRUMENTATION_HTTP_SERVER_EXCLUDE_PATHS=/health,/metrics,/ready,/actuator/health` |
+| **Node.js** | `@opentelemetry/instrumentation-http` 的 `ignoreIncomingRequestHook` |
+| **Go** | 在 middleware 中根据 path 判断，探针路径不创建 span |
+
+> 说明：OTel Collector 可配置 filter processor 做兜底过滤，但**客户端必须优先排除**，减少无效数据上报。
+
 ## 注入方式（推荐：Resource Attributes）
 
 把 `project` 注入为 **Resource Attribute**，它会自动附着到该进程产生的所有 spans（避免漏标）。
