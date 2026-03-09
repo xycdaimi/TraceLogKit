@@ -1,0 +1,18 @@
+# Prometheus file_sd 要求 target 格式为 host:port，不要加 http:// 前缀或路径
+# 同一 host:port 下不同路由的 metrics 通过 labels.metrics_path 指定，由 Prometheus relabel 生效
+# job 必须与 project 一致；面板禁止使用 job，只用 project
+- targets:
+    - "112.74.112.19:80"
+  labels:
+    project: "beepop-gsam"
+    service: "beepop-gsam-main"
+    job: "beepop-gsam"
+    metrics_path: "/gsam/metrics"
+
+- targets:
+    - "112.74.112.19:80"
+  labels:
+    project: "beepop-gsam"
+    service: "beepop-gsam-angle"
+    job: "beepop-gsam"
+    metrics_path: "/angle/metrics"

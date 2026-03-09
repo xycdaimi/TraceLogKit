@@ -19,7 +19,7 @@
       "relativeTimeRange": { "from": 300, "to": 0 },
       "datasourceUid": "tracelogkit-loki",
       "model": {
-        "expr": "( (count by (project) (count_over_time({project=~\".+\"} | json | label_format task_id=\"{{.task_id}}\" | task_id=~\".+\" | status=~\"(?i)failed\" [5m])) * 100) / count by (project) (count_over_time({project=~\".+\"} | json | label_format task_id=\"{{.task_id}}\" | task_id=~\".+\" [5m])) )",
+        "expr": "( (count by (project) (count_over_time({project=~\".+\"} | json | event=\"task.result.get\" | task_id=~\".+\" | status=~\"(?i)failed\" [5m])) * 100) / count by (project) (count_over_time({project=~\".+\"} | json | event=\"task.result.get\" | task_id=~\".+\" [5m])) )",
         "hide": false,
         "intervalMs": 1000,
         "maxDataPoints": 43200,

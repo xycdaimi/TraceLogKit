@@ -22,7 +22,7 @@
   ],
   "panels": [
     {
-      "description": "**目的**：监控业务服务的 RPS、错误率、延迟、流量、CPU、内存。\n\n**数据来源**：Prometheus 抓取的业务 targets（project!~\"tracelogkit-.*\"）。\n\n**指标与维度**：\n- **RPS、P95 延迟**：按 service，使用 `http_requests_total` / `http_request_duration_seconds_bucket`。\n- **项目流量、错误率、CPU、内存**：按 project，使用 `http_server_requests_total`、`process_cpu_seconds_total`、`process_resident_memory_bytes`。\n- 面板禁止使用 job，只用 project。详见《客户端普罗米修斯规范》。",
+      "description": "**目的**：监控业务服务的 RPS、错误率、延迟、流量、CPU、内存。\n\n**数据来源**：Prometheus 抓取的业务 targets（project!~\"tracelogkit-.*\"）。\n\n**指标与维度**：\n- **RPS**：按 service，使用 `http_requests_total`。\n- **项目流量、错误率、P95 延迟、CPU、内存**：按 project，使用 `http_server_requests_total`、`http_server_request_duration_seconds_bucket`、`process_cpu_seconds_total`、`process_resident_memory_bytes`。\n- 面板禁止使用 job，只用 project。详见《客户端普罗米修斯规范》。",
       "gridPos": { "h": 5, "w": 24, "x": 0, "y": 0 },
       "id": 1,
       "options": { "content": "", "mode": "markdown" },
@@ -68,15 +68,15 @@
     },
     {
       "datasource": { "type": "prometheus", "uid": "tracelogkit-prometheus" },
-      "description": "P95 延迟（按 service，使用 http_request_duration_seconds_bucket）。",
+      "description": "P95 延迟（按 project，使用 http_server_request_duration_seconds_bucket，规范约定）。",
       "fieldConfig": { "defaults": { "unit": "s", "min": 0 } },
       "gridPos": { "h": 10, "w": 24, "x": 0, "y": 21 },
       "id": 5,
       "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
       "targets": [
-        { "expr": "histogram_quantile(0.95, sum by (service, le) (rate(http_request_duration_seconds_bucket[5m])))", "legendFormat": "{{service}}", "refId": "A" }
+        { "expr": "histogram_quantile(0.95, sum by (project, le) (rate(http_server_request_duration_seconds_bucket[5m])))", "legendFormat": "{{project}}", "refId": "A" }
       ],
-      "title": "P95 延迟 (s) - 按 service",
+      "title": "P95 延迟 (s) - 按 project",
       "type": "timeseries"
     },
     {

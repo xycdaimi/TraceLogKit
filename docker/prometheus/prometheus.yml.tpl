@@ -13,4 +13,11 @@ scrape_configs:
       - files:
           - "/etc/prometheus/targets/*.yml"
         refresh_interval: 30s
-
+    relabel_configs:
+      # 若 target 的 labels 中有 metrics_path，则用作抓取路径（支持同端口不同路由）
+      - source_labels: [metrics_path]
+        regex: "(.+)"
+        target_label: __metrics_path__
+        replacement: "${1}"
+      - regex: "metrics_path"
+        action: labeldrop

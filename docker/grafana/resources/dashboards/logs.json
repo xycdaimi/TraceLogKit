@@ -22,7 +22,7 @@
   ],
   "panels": [
     {
-      "description": "**流程**：告警 → 按 project 过滤 → 从错误日志找到 task_id → 点击 task_id 跳转 Traces 面板进行链路回溯。\n\n**说明**：日志需为 JSON，包含 `level`/`service`/`task_id`/`trace_id`；`project` 为 Loki label。**任务失败率** = 失败任务数/任务数（按 task_id 去重）；失败 = 该 task_id 下存在 `status=failed` 的日志。",
+      "description": "**流程**：告警 → 按 project 过滤 → 从错误日志找到 task_id → 点击 task_id 跳转 Traces 面板进行链路回溯。\n\n**说明**：日志需为 JSON，包含 `level`/`service`/`task_id`/`trace_id`；`project` 为 Loki label。**Project 任务失败率** = 基于 `event=task.result.get` 日志的 `status` 字段（失败=非 success）；**Service 任务失败率** = 基于报错日志的 `status=failed`。告警按 project 聚合。",
       "gridPos": { "h": 5, "w": 24, "x": 0, "y": 0 },
       "id": 1,
       "options": { "content": "", "mode": "markdown" },
@@ -62,7 +62,7 @@
       "datasource": { "type": "loki", "uid": "tracelogkit-loki" },
       "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 }, "overrides": [{ "matcher": { "id": "byName", "options": "Value" }, "properties": [{ "id": "custom.hideFrom", "value": { "legend": true, "tooltip": false, "viz": false } }] }] },
       "gridPos": { "h": 10, "w": 12, "x": 0, "y": 23 },
-      "description": "失败任务数/任务数（5m）。任务数 = 去重 task_id 数；失败 = 该 task_id 下存在 status=failed 的日志。按 service 需 label_format 提取 task_id、service。",
+      "description": "失败任务数/任务数（5m）。基于报错日志：任务数 = 去重 task_id 数；失败 = 该 task_id 下存在 status=failed 的日志。按 service 需 label_format 提取 task_id、service。",
       "id": 5,
       "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
       "targets": [{ "expr": "100 * (count by (project, service) (count_over_time({project=~\"$project\"} | json | label_format task_id=\"{{.task_id}}\" | label_format service=\"{{.service}}\" | task_id=~\".+\" | status=~\"(?i)failed\" [5m])) / count by (project, service) (count_over_time({project=~\"$project\"} | json | label_format task_id=\"{{.task_id}}\" | label_format service=\"{{.service}}\" | task_id=~\".+\" [5m])))", "legendFormat": "{{service}}", "refId": "A" }],
@@ -73,10 +73,10 @@
       "datasource": { "type": "loki", "uid": "tracelogkit-loki" },
       "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 }, "overrides": [{ "matcher": { "id": "byName", "options": "Value" }, "properties": [{ "id": "custom.hideFrom", "value": { "legend": true, "tooltip": false, "viz": false } }] }] },
       "gridPos": { "h": 10, "w": 12, "x": 12, "y": 23 },
-      "description": "失败任务数/任务数（5m）。任务数 = 去重 task_id 数；失败 = 该 task_id 下存在 status=failed 的日志。",
+      "description": "失败任务数/任务数（5m）。基于 event=task.result.get 日志的 status 字段；失败 = status 非 success（如 FAILED、failed，大小写不敏感）。",
       "id": 6,
       "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
-      "targets": [{ "expr": "100 * (count by (project) (count_over_time({project=~\"$project\"} | json | label_format task_id=\"{{.task_id}}\" | task_id=~\".+\" | status=~\"(?i)failed\" [5m])) / count by (project) (count_over_time({project=~\"$project\"} | json | label_format task_id=\"{{.task_id}}\" | task_id=~\".+\" [5m])))", "legendFormat": "{{project}}", "refId": "A" }],
+      "targets": [{ "expr": "100 * (count by (project) (count_over_time({project=~\"$project\"} | json | event=\"task.result.get\" | task_id=~\".+\" | status=~\"(?i)failed\" [5m])) / count by (project) (count_over_time({project=~\"$project\"} | json | event=\"task.result.get\" | task_id=~\".+\" [5m])))", "legendFormat": "{{project}}", "refId": "A" }],
       "title": "任务失败率 (%) - 按 project",
       "type": "timeseries"
     },

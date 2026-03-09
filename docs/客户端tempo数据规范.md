@@ -56,7 +56,12 @@
 - `/metrics`（Prometheus 指标端点）
 - `/actuator/health`、`/actuator/info` 等 Spring Boot Actuator 健康端点
 
-**原因**：探针高频调用会产生大量无业务价值的 Trace，污染 Tempo 数据、影响查询和统计。
+**业务相关排除**（建议）：除上述标准路径外，客户端应根据**具体项目业务**，将以下类型的接口纳入排除列表：
+- **高频轮询类**：如轮询任务状态、轮询消息队列等，调用频次极高、对链路分析无价值
+- **心跳/保活类**：如 WebSocket 心跳、长连接保活等
+- **其他无业务价值的频繁调用**：根据业务识别，避免大量无意义 Trace 污染 Tempo 数据、影响查询和统计
+
+**原因**：探针及上述高频调用会产生大量无业务价值的 Trace，污染 Tempo 数据、影响查询和统计。
 
 **实现方式**（客户端优先，在 SDK/自动探针层排除）：
 
@@ -67,7 +72,7 @@
 | **Node.js** | `@opentelemetry/instrumentation-http` 的 `ignoreIncomingRequestHook` |
 | **Go** | 在 middleware 中根据 path 判断，探针路径不创建 span |
 
-> 说明：OTel Collector 可配置 filter processor 做兜底过滤，但**客户端必须优先排除**，减少无效数据上报。
+> 说明：业务相关排除路径（轮询、心跳等）也应一并加入上述 `excluded_urls` / `EXCLUDE_PATHS` 配置，减少无效数据上报。
 
 ## 注入方式（推荐：Resource Attributes）
 
